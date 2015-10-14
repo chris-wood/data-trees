@@ -40,8 +40,9 @@ class Leaf(Node):
             return False
 
     def display(self, out, prefix = "  ", indents = 0):
-        print >> out, (prefix * indents) + self.name + ":",
-        print >> out, self.data
+        print >> out, (prefix * indents) + self.name + ":"
+        for data in self.data:
+            print >> out, (prefix * (indents + 1)), data
 
 class Chunker(object):
     def __init__(self, chunksize, data):
@@ -79,6 +80,18 @@ def build_skewed_tree(chunker):
 
     return root
 
+def build_flat_tree(chunker):
+    index = 0
+    node_index = 0
+
+    node = Leaf("/leaf/%d" % (index))
+    root = None
+
+    for chunk in chunker:
+        pass
+
+    return root
+
 def main(argv):
 
     desc = '''
@@ -96,7 +109,12 @@ Play around with different data tree construction strategies.
 
     # Skewed tree display
     root = build_skewed_tree(chunker)
-    root.display(sys.stdout, "  ", 0)
+    if root:
+        root.display(sys.stdout)
+
+    root = build_flat_tree(chunker)
+    if root:
+        root.display(sys.stdout)
 
 if __name__ == "__main__":
     main(sys.argv)
