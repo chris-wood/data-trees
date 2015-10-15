@@ -2,25 +2,27 @@ import sys
 import argparse
 import networkx as nx
 
-SIZE_LIMIT = 128
+SIZE_LIMIT = 32
 
 class Node(object):
     def __init__(self, name):
         self.name = name
-        self.limit = SIZE_LIMIT
+        self.limit = 2 # SIZE_LIMIT
         self.size = 0
         self.nodes = []
+        self.parent = None
+        self.sibling = None
 
     def insert_node(self, node):
         if self.size < self.limit:
             self.nodes.append(node)
-            self.size += 8 # a byte per link, change later if needed
+            self.size += 1 # 8 # a byte per link, change later if needed
             return True
         else:
             return False
 
     def display(self, out, prefix = "  ", indents = 0):
-        print >> out, (prefix * indents) + self.name
+        print >> out, (prefix * indents) + self.name + ":"
         for node in self.nodes:
             node.display(out, prefix, indents + 1)
 
@@ -32,7 +34,7 @@ class Leaf(Node):
         self.limit = SIZE_LIMIT
 
     def add_data(self, data):
-        if self.size + len(data) < self.limit:
+        if self.size + len(data) <= self.limit:
             self.data.append(data)
             self.size += len(data)
             return True
@@ -61,6 +63,7 @@ def build_skewed_tree(chunker):
     node_index = 0
 
     node = Leaf("/leaf/%d" % (index))
+    index += 1
     root = None
 
     for chunk in chunker:
@@ -68,15 +71,19 @@ def build_skewed_tree(chunker):
         if not success:
             if root == None:
                 root = Node("/node/%d" % (node_index))
+                node_index += 1
 
             success = root.insert_node(node)
             if not success:
                 new_parent = Node("/node/%d" % (node_index))
+                node_index += 1
                 new_parent.insert_node(root)
+                new_parent.insert_node(node)
                 root = new_parent
 
-            index += 1
             node = Leaf("/leaf/%d" % (index))
+            index += 1
+            node.add_data(chunk)
 
     return root
 
@@ -85,10 +92,23 @@ def build_flat_tree(chunker):
     node_index = 0
 
     node = Leaf("/leaf/%d" % (index))
+    index += 1
     root = None
 
     for chunk in chunker:
-        pass
+        success = node.add_data(chunk)
+        if not success:
+            if root == None:
+                root = Node("/node/%d" % (node_index))
+                node_index += 1
+
+            # success = root.insert_node(node)
+            # TODO: create an empty clone of the root (empty nodes and leaves, only pointers),
+            # set current root to left-most root in clone, create new root and add two sides to it
+
+            node = Leaf("/leaf/%d" % (index))
+            index += 1
+            node.add_data(chunk)
 
     return root
 
@@ -102,16 +122,17 @@ Play around with different data tree construction strategies.
     parser.add_argument('-n', action="store", default=256, required=False, help="Size of sequential data stream")
     args = parser.parse_args()
 
-    n = args.n
+    n = int(args.n)
     data = [x for x in range(0, n)]
 
     chunker = Chunker(32, data)
 
-    # Skewed tree display
+    # Skewed tree
     root = build_skewed_tree(chunker)
     if root:
         root.display(sys.stdout)
 
+    # Flat tree
     root = build_flat_tree(chunker)
     if root:
         root.display(sys.stdout)
