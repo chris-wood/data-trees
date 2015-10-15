@@ -21,6 +21,12 @@ class Node(object):
         else:
             return False
 
+    def empty_clone(self, name):
+        node = Node(name)
+        for child in self.nodes:
+            node.insert_node(child.empty_clone(name))
+        return node
+
     def display(self, out, prefix = "  ", indents = 0):
         print >> out, (prefix * indents) + self.name + ":"
         for node in self.nodes:
@@ -40,6 +46,9 @@ class Leaf(Node):
             return True
         else:
             return False
+
+    def empty_clone(self, name):
+        return Leaf(name)
 
     def display(self, out, prefix = "  ", indents = 0):
         print >> out, (prefix * indents) + self.name + ":"
@@ -102,9 +111,35 @@ def build_flat_tree(chunker):
                 root = Node("/node/%d" % (node_index))
                 node_index += 1
 
-            # success = root.insert_node(node)
-            # TODO: create an empty clone of the root (empty nodes and leaves, only pointers),
-            # set current root to left-most root in clone, create new root and add two sides to it
+            # Attempt to insert into the parent until we fail
+            target = root
+            success = False
+            while target != None
+                success = target.insert_node(node)
+                if not success:
+                    if target.sibling == None:
+                        target = target.parent
+                    else:
+                        target = target.sibling
+
+            if not success:
+                clone = root.empty_clone("/node/%d/" % (node_index))
+                node_index += 1
+    
+                new_parent = Node("/node/%d" % (node_index))
+                node_index += 1
+                root.parent = new_parent
+                clone.parent = new_parent
+                root.sibling = clone
+                new_parent.insert_node(root)
+                new_parent.insert_node(clone)
+
+                # navigate to left-most node in the clone
+                target = clone
+                root = clone
+                while isinstance(target, Node):
+                    root, target = target, target.nodes[0] # drill down to the left-most node
+             
 
             node = Leaf("/leaf/%d" % (index))
             index += 1
