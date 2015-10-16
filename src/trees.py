@@ -140,9 +140,8 @@ def build_flat_tree(chunker):
                 # navigate to left-most node in the clone
                 target = clone
                 root = clone
-                while isinstance(target, Node):
+                while not isinstance(target, Leaf):
                     root, target = target, target.nodes[0] # drill down to the left-most node
-
 
             node = Leaf("/leaf/%d" % (index))
             index += 1
