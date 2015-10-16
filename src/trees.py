@@ -149,6 +149,24 @@ def build_flat_tree(chunker):
 
     return base
 
+def build_flat_tree_2(chunker):
+    index = 0
+    node_index = 0
+
+    leaf = Leaf("/leaf/%d" % (index))
+    index += 1
+
+    leaves = []
+
+    for chunk in chunker:
+        success = leaf.add_data(chunk)
+        if not success:
+            leaves.append(leaf)
+            leaf = Leaf("/leaf/%d" % (index))
+            index += 1
+
+    return None
+
 def main(argv):
 
     desc = '''
