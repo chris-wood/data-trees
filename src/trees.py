@@ -150,9 +150,24 @@ def build_flat_tree(chunker):
 
     return base
 
-def build_flat_tree_2(chunker):
+def overlay_tree(leaves):
     index = 0
     node_index = 0
+
+    level = []
+    num_nodes = ((len(leaves) - 1) / NODE_SIZE_LIMIT) + 1
+    index = 0
+    for x in range(num_nodes):
+        node = Node("/node/%d" % (node_index))
+        node_index += 1
+        for y in range(NODE_SIZE_LIMIT):
+            if index < len(leaves):
+                node.insert_node(leaves[index])
+                index += 1
+        level.append()
+
+def build_flat_tree_2(chunker):
+    index = 0
 
     leaf = Leaf("/leaf/%d" % (index))
     index += 1
@@ -166,10 +181,8 @@ def build_flat_tree_2(chunker):
             leaf = Leaf("/leaf/%d" % (index))
             index += 1
 
-    level = []
-
-
-    return None
+    root = overlay_tree(leaves)
+    return root
 
 def main(argv):
 
