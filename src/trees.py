@@ -114,7 +114,7 @@ def build_flat_tree(chunker):
             # Attempt to insert into the parent until we fail
             target = root
             success = False
-            while target != None
+            while target != None:
                 success = target.insert_node(node)
                 if not success:
                     if target.sibling == None:
