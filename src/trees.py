@@ -150,29 +150,32 @@ def build_flat_tree(chunker):
 
     return base
 
-def overlay_tree(leaves):
-    index = 0
-    node_index = 0
-
+def build_level(lowerlevel, node_index = 0):
     level = []
-    num_nodes = ((len(leaves) - 1) / NODE_SIZE_LIMIT) + 1
+    num_nodes = ((len(lowerlevel) - 1) / NODE_SIZE_LIMIT) + 1
     index = 0
     for x in range(num_nodes):
         node = Node("/node/%d" % (node_index))
         node_index += 1
         for y in range(NODE_SIZE_LIMIT):
-            if index < len(leaves):
-                node.insert_node(leaves[index])
+            if index < len(lowerlevel):
+                node.insert_node(lowerlevel[index])
                 index += 1
-        level.append()
+        level.append(node)
+    return level, node_index
+
+def overlay_tree(leaves):
+    level, index = build_level(leaves)
+    while len(level) > 1:
+        level, index = build_level(level, index)
+    return level[0]
 
 def build_flat_tree_2(chunker):
     index = 0
 
+    leaves = []
     leaf = Leaf("/leaf/%d" % (index))
     index += 1
-
-    leaves = []
 
     for chunk in chunker:
         success = leaf.add_data(chunk)
@@ -180,6 +183,7 @@ def build_flat_tree_2(chunker):
             leaves.append(leaf)
             leaf = Leaf("/leaf/%d" % (index))
             index += 1
+            leaf.add_data(chunk)
 
     root = overlay_tree(leaves)
     return root
@@ -206,6 +210,11 @@ Play around with different data tree construction strategies.
     # Flat tree
     chunker = Chunker(32, data)
     root = build_flat_tree(chunker)
+    if root:
+        root.display(sys.stdout)
+
+    chunker = Chunker(32, data)
+    root = build_flat_tree_2(chunker)
     if root:
         root.display(sys.stdout)
 
