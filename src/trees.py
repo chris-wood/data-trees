@@ -7,7 +7,7 @@ SIZE_LIMIT = 32
 class Node(object):
     def __init__(self, name):
         self.name = name
-        self.limit = 2 # SIZE_LIMIT
+        self.limit = 3 # SIZE_LIMIT
         self.size = 0
         self.nodes = []
         self.parent = None
@@ -103,12 +103,14 @@ def build_flat_tree(chunker):
     node = Leaf("/leaf/%d" % (index))
     index += 1
     root = None
+    base = None
 
     for chunk in chunker:
         success = node.add_data(chunk)
         if not success:
             if root == None:
                 root = Node("/node/%d" % (node_index))
+                base = root
                 node_index += 1
 
             # Attempt to insert into the parent until we fail
@@ -125,8 +127,9 @@ def build_flat_tree(chunker):
             if not success:
                 clone = root.empty_clone("/node/%d/" % (node_index))
                 node_index += 1
-    
+
                 new_parent = Node("/node/%d" % (node_index))
+                base = new_parent
                 node_index += 1
                 root.parent = new_parent
                 clone.parent = new_parent
@@ -139,13 +142,13 @@ def build_flat_tree(chunker):
                 root = clone
                 while isinstance(target, Node):
                     root, target = target, target.nodes[0] # drill down to the left-most node
-             
+
 
             node = Leaf("/leaf/%d" % (index))
             index += 1
             node.add_data(chunk)
 
-    return root
+    return base
 
 def main(argv):
 
@@ -160,14 +163,14 @@ Play around with different data tree construction strategies.
     n = int(args.n)
     data = [x for x in range(0, n)]
 
-    chunker = Chunker(32, data)
-
     # Skewed tree
+    chunker = Chunker(32, data)
     root = build_skewed_tree(chunker)
     if root:
         root.display(sys.stdout)
 
     # Flat tree
+    chunker = Chunker(32, data)
     root = build_flat_tree(chunker)
     if root:
         root.display(sys.stdout)
