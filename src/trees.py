@@ -2,12 +2,13 @@ import sys
 import argparse
 import networkx as nx
 
-SIZE_LIMIT = 32
+NODE_SIZE_LIMIT = 3
+LEAF_SIZE_LIMIT = 32
 
 class Node(object):
     def __init__(self, name):
         self.name = name
-        self.limit = 3 # SIZE_LIMIT
+        self.limit = NODE_SIZE_LIMIT
         self.size = 0
         self.nodes = []
         self.parent = None
@@ -37,7 +38,7 @@ class Leaf(Node):
         self.name = name
         self.data = []
         self.size = 0
-        self.limit = SIZE_LIMIT
+        self.limit = LEAF_SIZE_LIMIT
 
     def add_data(self, data):
         if self.size + len(data) <= self.limit:
@@ -164,6 +165,9 @@ def build_flat_tree_2(chunker):
             leaves.append(leaf)
             leaf = Leaf("/leaf/%d" % (index))
             index += 1
+
+    level = []
+
 
     return None
 
