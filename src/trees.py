@@ -97,7 +97,7 @@ def build_skewed_tree(chunker):
 
     return root
 
-def build_flat_tree(chunker):
+def build_flat_tree_1(chunker):
     index = 0
     node_index = 0
 
@@ -209,7 +209,7 @@ Play around with different data tree construction strategies.
 
     # Flat tree
     chunker = Chunker(32, data)
-    root = build_flat_tree(chunker)
+    root = build_flat_tree_1(chunker)
     if root:
         root.display(sys.stdout)
 
