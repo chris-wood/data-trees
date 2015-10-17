@@ -109,6 +109,7 @@ def build_flat_tree_1(chunker):
     for chunk in chunker:
         success = node.add_data(chunk)
         if not success:
+            print "adding to root"
             if root == None:
                 root = Node("/node/%d" % (node_index))
                 base = root
@@ -124,6 +125,9 @@ def build_flat_tree_1(chunker):
                         target = target.parent
                     else:
                         target = target.sibling
+
+            if success:
+                print "added full node to nearest root"
 
             if not success:
                 clone = root.empty_clone("/node/%d/" % (node_index))
@@ -202,10 +206,10 @@ Play around with different data tree construction strategies.
     data = [x for x in range(0, n)]
 
     # Skewed tree
-    chunker = Chunker(32, data)
-    root = build_skewed_tree(chunker)
-    if root:
-        root.display(sys.stdout)
+    # chunker = Chunker(32, data)
+    # root = build_skewed_tree(chunker)
+    # if root:
+    #     root.display(sys.stdout)
 
     # Flat tree
     chunker = Chunker(32, data)
@@ -213,10 +217,11 @@ Play around with different data tree construction strategies.
     if root:
         root.display(sys.stdout)
 
-    chunker = Chunker(32, data)
-    root = build_flat_tree_2(chunker)
-    if root:
-        root.display(sys.stdout)
+    # Second flat tree
+    # chunker = Chunker(32, data)
+    # root = build_flat_tree_2(chunker)
+    # if root:
+    #     root.display(sys.stdout)
 
 if __name__ == "__main__":
     main(sys.argv)
