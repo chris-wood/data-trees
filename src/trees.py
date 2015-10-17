@@ -111,6 +111,7 @@ def build_flat_tree_1(chunker):
         if not success:
             print "adding to root"
             if root == None:
+                print "brand new!"
                 root = Node("/node/%d" % (node_index))
                 base = root
                 node_index += 1
@@ -118,7 +119,7 @@ def build_flat_tree_1(chunker):
             # Attempt to insert into the parent until we fail
             target = root
             success = False
-            while target != None:
+            while target != None and not success:
                 success = target.insert_node(node)
                 if not success:
                     if target.sibling == None:
@@ -126,21 +127,20 @@ def build_flat_tree_1(chunker):
                     else:
                         target = target.sibling
 
-            if success:
-                print "added full node to nearest root"
-
             if not success:
+                print "creating a new branch"
                 clone = root.empty_clone("/node/%d/" % (node_index))
                 node_index += 1
 
                 new_parent = Node("/node/%d" % (node_index))
-                base = new_parent
                 node_index += 1
-                root.parent = new_parent
+                base.parent = new_parent
                 clone.parent = new_parent
-                root.sibling = clone
+                base.sibling = clone
                 new_parent.insert_node(root)
                 new_parent.insert_node(clone)
+
+                base = new_parent
 
                 # navigate to left-most node in the clone
                 target = clone
