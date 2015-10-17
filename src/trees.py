@@ -22,13 +22,13 @@ class Node(object):
         else:
             return False
 
-    def empty_clone(self, name):
-        node = Node(name)
+    def empty_clone(self):
+        node = Node(self.name)
         for child in self.nodes:
-            node.insert_node(child.empty_clone(name))
+            node.insert_node(child.empty_clone())
         return node
 
-    def display(self, out, prefix = "  ", indents = 0):
+    def display(self, out = sys.stdout, prefix = "  ", indents = 0):
         print >> out, (prefix * indents) + self.name + ":"
         for node in self.nodes:
             node.display(out, prefix, indents + 1)
@@ -38,6 +38,7 @@ class Leaf(Node):
         self.name = name
         self.data = []
         self.size = 0
+        self.parent = None
         self.limit = LEAF_SIZE_LIMIT
 
     def add_data(self, data):
@@ -48,10 +49,10 @@ class Leaf(Node):
         else:
             return False
 
-    def empty_clone(self, name):
-        return Leaf(name)
+    def empty_clone(self):
+        return Leaf(self.name)
 
-    def display(self, out, prefix = "  ", indents = 0):
+    def display(self, out = sys.stdout, prefix = "  ", indents = 0):
         print >> out, (prefix * indents) + self.name + ":"
         for data in self.data:
             print >> out, (prefix * (indents + 1)), data
@@ -109,9 +110,7 @@ def build_flat_tree_1(chunker):
     for chunk in chunker:
         success = node.add_data(chunk)
         if not success:
-            print "adding to root"
             if root == None:
-                print "brand new!"
                 root = Node("/node/%d" % (node_index))
                 base = root
                 node_index += 1
@@ -126,10 +125,12 @@ def build_flat_tree_1(chunker):
                         target = target.parent
                     else:
                         target = target.sibling
+                else:
+                    node.parent = target
 
             if not success:
                 print "creating a new branch"
-                clone = root.empty_clone("/node/%d/" % (node_index))
+                clone = base.empty_clone()
                 node_index += 1
 
                 new_parent = Node("/node/%d" % (node_index))
@@ -148,9 +149,15 @@ def build_flat_tree_1(chunker):
                 while not isinstance(target, Leaf):
                     root, target = target, target.nodes[0] # drill down to the left-most node
 
-            node = Leaf("/leaf/%d" % (index))
-            index += 1
-            node.add_data(chunk)
+                root.nodes[0] = node
+                node.parent = root
+                node = root.nodes[1]
+
+                node.add_data(chunk)
+            else:
+                node = Leaf("/leaf/%d" % (index))
+                index += 1
+                node.add_data(chunk)
 
     return base
 
