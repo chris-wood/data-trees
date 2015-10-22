@@ -98,69 +98,6 @@ def build_skewed_tree(chunker):
 
     return root
 
-def build_flat_tree_1(chunker):
-    index = 0
-    node_index = 0
-
-    node = Leaf("/leaf/%d" % (index))
-    index += 1
-    root = None
-    base = None
-
-    for chunk in chunker:
-        success = node.add_data(chunk)
-        if not success:
-            if root == None:
-                root = Node("/node/%d" % (node_index))
-                base = root
-                node_index += 1
-
-            # Attempt to insert into the parent until we fail
-            target = root
-            success = False
-            while target != None and not success:
-                success = target.insert_node(node)
-                if not success:
-                    if target.sibling == None:
-                        target = target.parent
-                    else:
-                        target = target.sibling
-                else:
-                    node.parent = target
-
-            if not success:
-                print "creating a new branch"
-                clone = base.empty_clone()
-                node_index += 1
-
-                new_parent = Node("/node/%d" % (node_index))
-                node_index += 1
-                base.parent = new_parent
-                clone.parent = new_parent
-                base.sibling = clone
-                new_parent.insert_node(root)
-                new_parent.insert_node(clone)
-
-                base = new_parent
-
-                # navigate to left-most node in the clone
-                target = clone
-                root = clone
-                while not isinstance(target, Leaf):
-                    root, target = target, target.nodes[0] # drill down to the left-most node
-
-                root.nodes[0] = node
-                node.parent = root
-                node = root.nodes[1]
-
-                node.add_data(chunk)
-            else:
-                node = Leaf("/leaf/%d" % (index))
-                index += 1
-                node.add_data(chunk)
-
-    return base
-
 def build_level(lowerlevel, node_index = 0):
     level = []
     num_nodes = ((len(lowerlevel) - 1) / NODE_SIZE_LIMIT) + 1
@@ -181,7 +118,7 @@ def overlay_tree(leaves):
         level, index = build_level(level, index)
     return level[0]
 
-def build_flat_tree_2(chunker):
+def build_flat_tree(chunker):
     index = 0
 
     leaves = []
@@ -213,22 +150,16 @@ Play around with different data tree construction strategies.
     data = [x for x in range(0, n)]
 
     # Skewed tree
-    # chunker = Chunker(32, data)
-    # root = build_skewed_tree(chunker)
-    # if root:
-    #     root.display(sys.stdout)
-
-    # Flat tree
     chunker = Chunker(32, data)
-    root = build_flat_tree_1(chunker)
+    root = build_skewed_tree(chunker)
     if root:
         root.display(sys.stdout)
 
-    # Second flat tree
-    # chunker = Chunker(32, data)
-    # root = build_flat_tree_2(chunker)
-    # if root:
-    #     root.display(sys.stdout)
+    # Flat tree
+    chunker = Chunker(32, data)
+    root = build_flat_tree(chunker)
+    if root:
+        root.display(sys.stdout)
 
 if __name__ == "__main__":
     main(sys.argv)
