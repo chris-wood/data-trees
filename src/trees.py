@@ -5,6 +5,77 @@ import networkx as nx
 NODE_SIZE_LIMIT = 3
 LEAF_SIZE_LIMIT = 32
 
+class TreeBuilder(object):
+    def __init__(self, name):
+        self.base_name = name
+
+    def build_skewed_tree(chunker):
+        index = 0
+        node_index = 0
+
+        node = Leaf("/leaf/%d" % (index))
+        index += 1
+        root = None
+
+        for chunk in chunker:
+            success = node.add_data(chunk)
+            if not success:
+                if root == None:
+                    root = Node("/node/%d" % (node_index))
+                    node_index += 1
+
+                success = root.insert_node(node)
+                if not success:
+                    new_parent = Node("/node/%d" % (node_index))
+                    node_index += 1
+                    new_parent.insert_node(root)
+                    new_parent.insert_node(node)
+                    root = new_parent
+
+                node = Leaf("/leaf/%d" % (index))
+                index += 1
+                node.add_data(chunk)
+
+        return root
+
+    def build_level(lowerlevel, node_index = 0):
+        level = []
+        num_nodes = ((len(lowerlevel) - 1) / NODE_SIZE_LIMIT) + 1
+        index = 0
+        for x in range(num_nodes):
+            node = Node("/node/%d" % (node_index))
+            node_index += 1
+            for y in range(NODE_SIZE_LIMIT):
+                if index < len(lowerlevel):
+                    node.insert_node(lowerlevel[index])
+                    index += 1
+            level.append(node)
+        return level, node_index
+
+    def overlay_tree(leaves):
+        level, index = build_level(leaves)
+        while len(level) > 1:
+            level, index = build_level(level, index)
+        return level[0]
+
+    def build_flat_tree(chunker):
+        index = 0
+
+        leaves = []
+        leaf = Leaf("/leaf/%d" % (index))
+        index += 1
+
+        for chunk in chunker:
+            success = leaf.add_data(chunk)
+            if not success:
+                leaves.append(leaf)
+                leaf = Leaf("/leaf/%d" % (index))
+                index += 1
+                leaf.add_data(chunk)
+
+        root = overlay_tree(leaves)
+        return root
+
 class Node(object):
     def __init__(self, name):
         self.name = name
@@ -69,72 +140,6 @@ class Chunker(object):
             yield self.data[self.index:(self.index + self.chunksize)]
             self.index += self.chunksize
 
-def build_skewed_tree(chunker):
-    index = 0
-    node_index = 0
-
-    node = Leaf("/leaf/%d" % (index))
-    index += 1
-    root = None
-
-    for chunk in chunker:
-        success = node.add_data(chunk)
-        if not success:
-            if root == None:
-                root = Node("/node/%d" % (node_index))
-                node_index += 1
-
-            success = root.insert_node(node)
-            if not success:
-                new_parent = Node("/node/%d" % (node_index))
-                node_index += 1
-                new_parent.insert_node(root)
-                new_parent.insert_node(node)
-                root = new_parent
-
-            node = Leaf("/leaf/%d" % (index))
-            index += 1
-            node.add_data(chunk)
-
-    return root
-
-def build_level(lowerlevel, node_index = 0):
-    level = []
-    num_nodes = ((len(lowerlevel) - 1) / NODE_SIZE_LIMIT) + 1
-    index = 0
-    for x in range(num_nodes):
-        node = Node("/node/%d" % (node_index))
-        node_index += 1
-        for y in range(NODE_SIZE_LIMIT):
-            if index < len(lowerlevel):
-                node.insert_node(lowerlevel[index])
-                index += 1
-        level.append(node)
-    return level, node_index
-
-def overlay_tree(leaves):
-    level, index = build_level(leaves)
-    while len(level) > 1:
-        level, index = build_level(level, index)
-    return level[0]
-
-def build_flat_tree(chunker):
-    index = 0
-
-    leaves = []
-    leaf = Leaf("/leaf/%d" % (index))
-    index += 1
-
-    for chunk in chunker:
-        success = leaf.add_data(chunk)
-        if not success:
-            leaves.append(leaf)
-            leaf = Leaf("/leaf/%d" % (index))
-            index += 1
-            leaf.add_data(chunk)
-
-    root = overlay_tree(leaves)
-    return root
 
 def main(argv):
 
