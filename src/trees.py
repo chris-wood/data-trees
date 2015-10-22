@@ -6,8 +6,8 @@ NODE_SIZE_LIMIT = 3
 LEAF_SIZE_LIMIT = 32
 
 class TreeBuilder(object):
-    def __init__(self, chunker, name):
-        self.base_name = name
+    def __init__(self, chunker, base_name):
+        self.base_name = base_name
         self.chunker = chunker
 
     def build_skewed_tree(self):
