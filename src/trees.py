@@ -6,12 +6,14 @@ NODE_SIZE_LIMIT = 3
 LEAF_SIZE_LIMIT = 32
 
 class TreeBuilder(object):
-    def __init__(self, name):
+    def __init__(self, chunker, name):
         self.base_name = name
+        self.chunker = chunker
 
-    def build_skewed_tree(chunker):
+    def build_skewed_tree(self):
         index = 0
         node_index = 0
+        chunker = self.chunker
 
         node = Leaf("/leaf/%d" % (index))
         index += 1
@@ -38,7 +40,7 @@ class TreeBuilder(object):
 
         return root
 
-    def build_level(lowerlevel, node_index = 0):
+    def build_level(self, lowerlevel, node_index = 0):
         level = []
         num_nodes = ((len(lowerlevel) - 1) / NODE_SIZE_LIMIT) + 1
         index = 0
@@ -52,13 +54,14 @@ class TreeBuilder(object):
             level.append(node)
         return level, node_index
 
-    def overlay_tree(leaves):
-        level, index = build_level(leaves)
+    def overlay_tree(self, leaves):
+        level, index = self.build_level(leaves)
         while len(level) > 1:
-            level, index = build_level(level, index)
+            level, index = self.build_level(level, index)
         return level[0]
 
-    def build_flat_tree(chunker):
+    def build_flat_tree(self):
+        chunker = self.chunker
         index = 0
 
         leaves = []
@@ -73,7 +76,7 @@ class TreeBuilder(object):
                 index += 1
                 leaf.add_data(chunk)
 
-        root = overlay_tree(leaves)
+        root = self.overlay_tree(leaves)
         return root
 
 class Node(object):
@@ -156,13 +159,15 @@ Play around with different data tree construction strategies.
 
     # Skewed tree
     chunker = Chunker(32, data)
-    root = build_skewed_tree(chunker)
+    builder = TreeBuilder(chunker, "/node")
+    root = builder.build_skewed_tree()
     if root:
         root.display(sys.stdout)
 
     # Flat tree
     chunker = Chunker(32, data)
-    root = build_flat_tree(chunker)
+    builder = TreeBuilder(chunker, "/node")
+    root = builder.build_flat_tree()
     if root:
         root.display(sys.stdout)
 
